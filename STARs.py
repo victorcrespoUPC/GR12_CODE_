@@ -44,21 +44,17 @@ def compute_scenario_1():
         star_data = stars_list[star_id]
         dist_iaf_m = star_data["dist_km"] * 1000.0
 
-        # Trajectòria CDO backward (x_traj surt de 0 a valors negatius)
         x_traj, h_traj, v_traj = getCDO(model, pct_mlw)
 
-        # MÈTODE 2: Recorrem la simulació fins a assolir la distància de la STAR
-        # Com que dt = 1 s a cada iteració, l'índex i és directament el temps en segons
         alt_entry_m = h_traj[-1]
         time_to_iaf_s = float(len(x_traj) - 1)
 
         for i in range(len(x_traj)):
-            if (x_traj[i]) >= dist_iaf_m:
+            if abs(x_traj[i]) >= dist_iaf_m:
                 alt_entry_m = h_traj[i]
                 time_to_iaf_s = float(i)
                 break
 
-        # Hora d'arribada (TOA) a l'IAF
         toa_iaf = ENTRY_TIME + timedelta(seconds=time_to_iaf_s)
 
         results.append(
@@ -75,25 +71,65 @@ def compute_scenario_1():
             }
         )
 
-    # Ordenació per hora d'arribada (TOA a l'IAF) i seqüenciació
     df = pd.DataFrame(results)
     df = df.sort_values(by="TOA_dt").reset_index(drop=True)
     df["Seq. Order"] = df.index + 1
 
-    # Separació respecte a l'aeronau precedent a l'IAF
     separations = [None]
     for i in range(1, len(df)):
         dt = (df.loc[i, "TOA_dt"] - df.loc[i - 1, "TOA_dt"]).total_seconds()
         separations.append(round(dt, 1))
 
     df["Sep. to previous at IAF [s]"] = separations
-    return df.drop(columns=["TOA_dt"])
+    return df
+
+
+def seqüenciar_arribades_iaf(df_scen_1: pd.DataFrame, separacio_segons: float = 120.0):
+    df_scen_2 = df_scen_1.copy()
+    iaf_programats_dt = []
+    retards_s = []
+
+    temps_acumulat_dt = None
+
+    for i, row in df_scen_2.iterrows():
+        toa_teoric = row["TOA_dt"]
+
+        if i == 0:
+            temps_acumulat_dt = toa_teoric
+        else:
+            temps_acumulat_dt = temps_acumulat_dt + timedelta(seconds=separacio_segons)
+
+        retard = (temps_acumulat_dt - toa_teoric).total_seconds()
+
+        iaf_programats_dt.append(temps_acumulat_dt.strftime("%H:%M:%S"))
+        retards_s.append(round(retard, 1))
+
+    df_scen_2["IAF Programat (2 min fix)"] = iaf_programats_dt
+    df_scen_2["Retard necessari [s]"] = retards_s
+
+    columnes_mostrar = [
+        "Seq. Order",
+        "Aircraft model",
+        "STAR",
+        "IAF",
+        "Time from STAR entry WP to IAF [s]",
+        "TOA IAF",
+        "IAF Programat (2 min fix)",
+        "Retard necessari [s]"
+    ]
+    return df_scen_2[columnes_mostrar]
 
 
 if __name__ == "__main__":
     pd.set_option("display.max_columns", None)
     pd.set_option("display.width", 1000)
 
-    taula_resultat = compute_scenario_1()
-    print("\n--- TAULA ESCENARI 1 (Simultaneous arrivals at 11:45:00 AM) ---")
-    print(taula_resultat.to_string(index=False))
+
+    taula_scen1 = compute_scenario_1()
+    print("\n--- TAULA ESCENARI 1 (Arribades simultànies a les 11:45:00) ---")
+    print(taula_scen1.drop(columns=["TOA_dt"]).to_string(index=False))
+
+
+    taula_scen2 = seqüenciar_arribades_iaf(taula_scen1, separacio_segons=120.0)
+    print("\n\n--- TAULA ESCENARI 2 (Sequenciament a l'IAF amb 2 minuts exactes) ---")
+    print(taula_scen2.to_string(index=False))

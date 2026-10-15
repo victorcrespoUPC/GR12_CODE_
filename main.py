@@ -269,3 +269,18 @@ if __name__ == "__main__":
     plt.legend(loc="upper right", fontsize=7.5)
     plt.tight_layout()
     plt.show()
+
+    from STARs import compute_scenario_1, seqüenciar_arribades_iaf, compute_scenario_1
+
+    if __name__ == "__main__":
+        # 1. Executa i obté la taula de l'Escenari 1
+        taula_scen1 = compute_scenario_1()
+        print("\n--- TAULA ESCENARI 1 ---")
+        print(taula_scen1.drop(columns=["TOA_dt"]).to_string(index=False))
+
+        print("\n\n")
+
+        # 2. Executa la taula de l'Escenari 2 passant-li el resultat del primer
+        taula_scen2 = seqüenciar_arribades_iaf(taula_scen1, separacio_segons=120.0)
+        print("--- TAULA ESCENARI 2 (2 minuts exactes a l'IAF) ---")
+        print(taula_scen2.to_string(index=False))
