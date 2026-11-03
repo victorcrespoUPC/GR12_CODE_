@@ -272,3 +272,34 @@ if __name__ == "__main__":
     plt.legend(loc="upper right", fontsize=7.5)
     plt.tight_layout()
     plt.show()
+    #ALTITUDE CONSTRAINTS:
+print("ALTITUDS SEGONS MODEL I DISTANCIA A IAF")
+puntos_a_comprobar = [
+    # B767 (ALBER1Z)
+    ("B767-300ER", 80.0, 30.0),   # A 30 km del IAF
+    ("B767-300ER", 80.0, 60.0),   # A 60 km del IAF
+    ("B767-300ER", 80.0, 90.0),   # A 90 km del IAF
+
+    # B737 (PUMAL1Z)
+    ("B737", 100.0, 25.0),        # A 25 km del IAF
+    ("B737", 100.0, 50.0),        # A 50 km del IAF
+    ("B737", 100.0, 75.0),        # A 75 km del IAF
+
+    # B777 (MARTA3Z)
+    ("B777-300", 100.0, 40.0),    # A 40 km del IAF
+    ("B777-300", 100.0, 80.0),    # A 80 km del IAF
+    ("B777-300", 100.0, 120.0),   # A 120 km del IAF
+
+    # A319 (LOBAR2W)
+    ("A319-131", 80.0, 30.0),     # A 30 km del IAF
+    ("A319-131", 80.0, 60.0),     # A 60 km del IAF
+    ("A319-131", 80.0, 90.0)      # A 90 km del IAF
+]
+for model,pct_mlw, dist_km in puntos_a_comprobar:
+    x_traj, h_traj, _ = getCDO(aircraft_model=model, MLW_percent=pct_mlw)
+    dist_m=dist_km*1000
+    #Fem servir numpy per operar sorbe tot l'array i buscar el punt més proper restant totes les distàncies a la buscada
+    idx = (np.abs(np.abs(x_traj) - dist_m)).argmin() #Així tenim l'index més petit, en què podem calcular l'alçada en el punt dessitjat.
+    alt_m = h_traj[idx]
+    alt_ft = alt_m * M_TO_FT
+    print(f"{model} ({pct_mlw}% MLW): A {dist_km} km del IAF Altitud = {alt_ft} ft")
