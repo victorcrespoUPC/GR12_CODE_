@@ -241,7 +241,7 @@ def getCDO(aircraft_model: str, MLW_percent: float):
 
 
 # ==========================================
-# 5. GENERACIÓ DEL GRÀFIC (Diapositiva 2)
+# 5. GENERACIÓ DEL GRÀFIC 
 # ==========================================
 if __name__ == "__main__":
     casos_presentacio = [
